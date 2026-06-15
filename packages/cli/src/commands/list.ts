@@ -8,11 +8,17 @@ export function registerListCommand(program: Command) {
     .description("List mailboxes or messages")
     .option("--email-id <id>", "list messages in this mailbox")
     .option("--cursor <cursor>", "pagination cursor")
+    .option("--from <sender>", "filter messages by sender address or domain")
+    .option("--provider <name>", "filter messages by provider name, e.g. openai or qq")
     .action(async (opts) => {
       const json = program.opts().json;
       try {
         if (opts.emailId) {
-          const data = (await api.listMessages(opts.emailId, opts.cursor)) as any;
+          const data = (await api.listMessages(opts.emailId, {
+            cursor: opts.cursor,
+            from: opts.from,
+            provider: opts.provider,
+          })) as any;
           if (json) {
             printJson({
               messages: data.messages.map((m: any) => ({

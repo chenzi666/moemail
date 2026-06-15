@@ -13,14 +13,20 @@ export function registerWaitCommand(program: Command) {
     .requiredOption("--email-id <id>", "email ID to watch")
     .option("--timeout <seconds>", "max wait time in seconds", "120")
     .option("--interval <seconds>", "poll interval in seconds", "5")
+    .option("--from <sender>", "wait only for messages from this sender address or domain")
+    .option("--provider <name>", "wait only for messages from this provider, e.g. openai or qq")
     .action(async (opts) => {
       const json = program.opts().json;
       const timeout = parseInt(opts.timeout, 10);
       const interval = parseInt(opts.interval, 10);
       const emailId = opts.emailId;
+      const messageFilters = {
+        from: opts.from,
+        provider: opts.provider,
+      };
 
       try {
-        const initial = (await api.listMessages(emailId)) as any;
+        const initial = (await api.listMessages(emailId, messageFilters)) as any;
         const knownIds = new Set<string>(initial.messages.map((m: any) => m.id));
 
         const startTime = Date.now();
@@ -35,7 +41,7 @@ export function registerWaitCommand(program: Command) {
           log(`Polling... (${elapsed}/${timeout}s)`);
           await sleep(interval * 1000);
 
-          const current = (await api.listMessages(emailId)) as any;
+          const current = (await api.listMessages(emailId, messageFilters)) as any;
           const newMessages = current.messages.filter((m: any) => !knownIds.has(m.id));
 
           if (newMessages.length > 0) {

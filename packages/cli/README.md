@@ -31,8 +31,8 @@ moemail wait --email-id <email_id> --timeout 120
 |---------|-------------|-----------|
 | `config` | Set default domain and options | `--domain <domain>`, `--expiry <duration>` |
 | `create` | Create a temporary email address | `--domain <domain>`, `--expiry <duration>`, `--json` |
-| `list` | List all temporary emails | `--json` |
-| `wait` | Wait for incoming messages | `--email-id <id>`, `--timeout <seconds>`, `--json` |
+| `list` | List all temporary emails or messages | `--email-id <id>`, `--from <sender>`, `--provider <name>`, `--json` |
+| `wait` | Wait for incoming messages | `--email-id <id>`, `--from <sender>`, `--provider <name>`, `--timeout <seconds>`, `--json` |
 | `read` | Read email message content | `--email-id <id>`, `--message-id <id>`, `--json` |
 | `send` | Send email from temporary address | `--email-id <id>`, `--to <address>`, `--subject <text>`, `--body <text>`, `--json` |
 | `delete` | Delete temporary email | `--email-id <id>` |
@@ -53,6 +53,9 @@ ADDRESS=$(echo $EMAIL | jq -r '.address')
 # Wait for verification email
 MSG=$(moemail wait --email-id $EMAIL_ID --timeout 120 --json)
 MSG_ID=$(echo $MSG | jq -r '.messageId')
+
+# Or wait only for a specific provider
+MSG=$(moemail wait --email-id $EMAIL_ID --provider openai --timeout 120 --json)
 
 # Read message content
 CONTENT=$(moemail read --email-id $EMAIL_ID --message-id $MSG_ID --json)

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createDb } from "@/lib/db"
 import { emails, messages } from "@/lib/schema"
-import { eq, and, lt, or, sql, ne, isNull } from "drizzle-orm"
+import { eq, and, lt, or, sql, ne, isNull, type SQL } from "drizzle-orm"
 import { encodeCursor, decodeCursor } from "@/lib/cursor"
 import { getUserId } from "@/lib/apiKey"
 import { checkBasicSendPermission } from "@/lib/send-permissions"
@@ -48,6 +48,34 @@ export async function DELETE(
 
 const PAGE_SIZE = 20
 
+const PROVIDER_SENDER_FILTERS: Record<string, string[]> = {
+  openai: ["openai.com"],
+  chatgpt: ["openai.com"],
+  qq: ["qq.com", "foxmail.com", "tencent.com"],
+  tencent: ["qq.com", "foxmail.com", "tencent.com"],
+  github: ["github.com"],
+  google: ["google.com", "googlemail.com", "gmail.com"],
+  gmail: ["google.com", "googlemail.com", "gmail.com"],
+  microsoft: ["microsoft.com", "outlook.com", "live.com", "hotmail.com"],
+  apple: ["apple.com"],
+  discord: ["discord.com"],
+  x: ["x.com", "twitter.com"],
+  twitter: ["twitter.com", "x.com"]
+}
+
+function normalizeSenderFilter(value: string | null) {
+  const normalized = value?.trim().toLowerCase()
+  return normalized || null
+}
+
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, match => `\\${match}`)
+}
+
+function createSenderFilterCondition(value: string): SQL {
+  return sql`LOWER(${messages.fromAddress}) LIKE ${`%${escapeLikePattern(value)}%`} ESCAPE '\'`
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -55,6 +83,8 @@ export async function GET(
   const { searchParams } = new URL(request.url)
   const cursorStr = searchParams.get('cursor')
   const messageType = searchParams.get('type')
+  const fromFilter = normalizeSenderFilter(searchParams.get('from'))
+  const providerFilter = normalizeSenderFilter(searchParams.get('provider'))
 
   try {
     const db = createDb()
@@ -85,6 +115,22 @@ export async function GET(
       )
     }
 
+    const senderConditions: SQL[] = []
+
+    if (fromFilter) {
+      senderConditions.push(createSenderFilterCondition(fromFilter))
+    }
+
+    if (providerFilter) {
+      const providerFilters = PROVIDER_SENDER_FILTERS[providerFilter] ?? [providerFilter]
+      const providerConditions = providerFilters.map(createSenderFilterCondition)
+      senderConditions.push(
+        providerConditions.length === 1
+          ? providerConditions[0]
+          : or(...providerConditions)!
+      )
+    }
+
     const baseConditions = and(
       eq(messages.emailId, id),
       messageType === 'sent' 
@@ -92,7 +138,8 @@ export async function GET(
         : or(
             ne(messages.type, "sent"),
             isNull(messages.type)
-          )
+          ),
+      ...senderConditions
     )
 
     const totalResult = await db.select({ count: sql<number>`count(*)` })
@@ -159,4 +206,4 @@ export async function GET(
       { status: 500 }
     )
   }
-} 
+}

@@ -482,8 +482,11 @@ GET /api/emails?cursor=xxx
 
 #### Get Messages for Email
 ```http
-GET /api/emails/{emailId}?cursor=xxx
+GET /api/emails/{emailId}?cursor=xxx&from=openai.com&provider=openai
 ```
+Optional filters:
+- `from`: filter by sender address or domain, for example `openai.com`
+- `provider`: filter by common provider name, for example `openai` or `qq`
 
 #### Delete Email
 ```http
@@ -557,6 +560,10 @@ moemail create --domain moemail.app --expiry 1h --json
 
 # Wait for new messages (polling)
 moemail wait --email-id <id> --timeout 120 --json
+
+# Wait only for a specific sender or provider
+moemail wait --email-id <id> --provider openai --timeout 120 --json
+moemail wait --email-id <id> --from openai.com --timeout 120 --json
 
 # Read message content
 moemail read --email-id <id> --message-id <id> --json

@@ -512,11 +512,13 @@ GET /api/emails?cursor=xxx
 
 #### 获取指定邮箱邮件列表
 ```http
-GET /api/emails/{emailId}?cursor=xxx
+GET /api/emails/{emailId}?cursor=xxx&from=openai.com&provider=openai
 ```
 参数说明：
 - `emailId`: 邮箱的唯一标识符，必填
 - `cursor`: 分页游标，可选
+- `from`: 按发件人地址或域名过滤，可选，例如 `openai.com`
+- `provider`: 按常见服务商过滤，可选，例如 `openai`、`qq`
 
 返回响应：
 ```json
@@ -536,7 +538,7 @@ GET /api/emails/{emailId}?cursor=xxx
 响应字段说明：
 - `messages`: 邮件列表数组
 - `nextCursor`: 下一页游标，用于分页请求
-- `total`: 邮件总数量
+- `total`: 符合过滤条件的邮件总数量
 
 #### 删除邮箱
 ```http
@@ -809,6 +811,10 @@ moemail create --domain moemail.app --expiry 1h --json
 
 # 等待新邮件（轮询）
 moemail wait --email-id <id> --timeout 120 --json
+
+# 只等待指定发件人或服务商的邮件
+moemail wait --email-id <id> --provider openai --timeout 120 --json
+moemail wait --email-id <id> --from openai.com --timeout 120 --json
 
 # 读取邮件内容
 moemail read --email-id <id> --message-id <id> --json

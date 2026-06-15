@@ -10,6 +10,28 @@ export class ApiError extends Error {
   }
 }
 
+type QueryValue = string | number | boolean | null | undefined;
+
+export interface ListMessagesOptions {
+  cursor?: string;
+  from?: string;
+  provider?: string;
+  type?: "received" | "sent";
+}
+
+function withQuery(path: string, params: Record<string, QueryValue>): string {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+
+  const query = searchParams.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 async function request(
   method: string,
   path: string,
@@ -65,10 +87,17 @@ export const api = {
     request("POST", "/api/emails/generate", body as any),
 
   listEmails: (cursor?: string) =>
-    request("GET", `/api/emails${cursor ? `?cursor=${cursor}` : ""}`),
+    request("GET", withQuery("/api/emails", { cursor })),
 
-  listMessages: (emailId: string, cursor?: string) =>
-    request("GET", `/api/emails/${emailId}${cursor ? `?cursor=${cursor}` : ""}`),
+  listMessages: (emailId: string, options: string | ListMessagesOptions = {}) => {
+    const params = typeof options === "string" ? { cursor: options } : options;
+    return request("GET", withQuery(`/api/emails/${emailId}`, {
+      cursor: params.cursor,
+      from: params.from,
+      provider: params.provider,
+      type: params.type,
+    }));
+  },
 
   getMessage: (emailId: string, messageId: string) =>
     request("GET", `/api/emails/${emailId}/${messageId}`),

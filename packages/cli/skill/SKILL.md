@@ -50,14 +50,21 @@ MSG_ID=$(echo "$MSG" | jq -r '.messageId')
 moemail --json read --email-id "$ID" --message-id "$MSG_ID"
 ```
 
+To wait for a specific sender or provider:
+
+```bash
+moemail --json wait --email-id "$ID" --provider openai --timeout 120
+moemail --json wait --email-id "$ID" --from openai.com --timeout 120
+```
+
 ## Command Reference
 
 | Command | Required Options | Notable Options |
 |---------|-----------------|-----------------|
 | `config set` | `<key> <value>` | keys: `api-url`, `api-key` |
 | `create` | — | `--name`, `--domain`, `--expiry` (1h\|24h\|3d\|permanent) |
-| `list` | — | `--email-id` (lists messages in mailbox), `--cursor` |
-| `wait` | `--email-id` | `--timeout` (default 120s), `--interval` (default 5s) |
+| `list` | — | `--email-id` (lists messages in mailbox), `--cursor`, `--from`, `--provider` |
+| `wait` | `--email-id` | `--timeout` (default 120s), `--interval` (default 5s), `--from`, `--provider` |
 | `read` | `--email-id`, `--message-id` | `--format` (text\|html) |
 | `send` | `--email-id`, `--to`, `--subject`, `--content` | — |
 | `delete` | `--email-id` | — |
