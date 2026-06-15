@@ -34,6 +34,7 @@
       "generateEmail": "生成临时邮箱",
       "getEmails": "获取邮箱列表",
       "getMessages": "获取邮件列表",
+      "filterMessages": "按发件人/服务商过滤邮件",
       "getMessage": "获取单封邮件",
       "createEmailShare": "创建邮箱分享链接",
       "getEmailShares": "获取邮箱分享链接列表",
@@ -51,7 +52,8 @@
       "note7": "cursor 用于分页，从上一次请求的响应中获取 nextCursor",
       "note8": "所有请求都需要包含 X-API-Key 请求头",
       "note9": "expiresIn 是分享链接的有效期（毫秒），0 表示永久有效",
-      "note10": "shareId 是分享记录的唯一标识符"
+      "note10": "shareId 是分享记录的唯一标识符",
+      "note11": "from 可按发件人地址或域名过滤，provider 可按服务商过滤（如 openai、qq）"
     }
   },
   "emailService": {

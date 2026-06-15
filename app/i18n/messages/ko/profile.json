@@ -34,6 +34,7 @@
       "generateEmail": "임시 이메일 생성",
       "getEmails": "이메일 목록 가져오기",
       "getMessages": "메시지 목록 가져오기",
+      "filterMessages": "발신자/서비스로 메시지 필터링",
       "getMessage": "단일 메시지 가져오기",
       "createEmailShare": "이메일 공유 링크 생성",
       "getEmailShares": "이메일 공유 링크 가져오기",
@@ -51,7 +52,8 @@
       "note7": "cursor는 페이지네이션을 위한 것으로, 이전 응답에서 nextCursor를 가져옵니다",
       "note8": "모든 요청에는 X-API-Key 헤더가 필요합니다",
       "note9": "expiresIn은 공유 링크 유효 기간(밀리초)이며, 0은 영구를 의미합니다",
-      "note10": "shareId는 공유 기록의 고유 식별자입니다"
+      "note10": "shareId는 공유 기록의 고유 식별자입니다",
+      "note11": "from은 발신자 주소 또는 도메인으로 필터링하고, provider는 서비스 이름(예: openai, qq)으로 필터링합니다"
     }
   },
   "emailService": {

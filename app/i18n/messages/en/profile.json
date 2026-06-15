@@ -34,6 +34,7 @@
       "generateEmail": "Generate Temp Email",
       "getEmails": "Get Email List",
       "getMessages": "Get Message List",
+      "filterMessages": "Filter Messages by Sender or Provider",
       "getMessage": "Get Single Message",
       "createEmailShare": "Create Email Share Link",
       "getEmailShares": "Get Email Share Links",
@@ -51,7 +52,8 @@
       "note7": "cursor is for pagination, get nextCursor from previous response",
       "note8": "All requests require X-API-Key header",
       "note9": "expiresIn is the share link validity period in milliseconds, 0 means permanent",
-      "note10": "shareId is the unique identifier for a share record"
+      "note10": "shareId is the unique identifier for a share record",
+      "note11": "from filters by sender address or domain, and provider filters by service name (such as openai or qq)"
     }
   },
   "emailService": {

@@ -416,6 +416,32 @@ export function ApiKeyPanel() {
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">{t("docs.filterMessages")}</div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(
+                              `curl ${window.location.protocol}//${window.location.host}/api/emails/{emailId}?provider=openai \\
+  -H "X-API-Key: YOUR_API_KEY"
+
+curl ${window.location.protocol}//${window.location.host}/api/emails/{emailId}?from=openai.com \\
+  -H "X-API-Key: YOUR_API_KEY"`
+                            )}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <pre className="text-xs bg-muted/50 rounded-lg p-4 overflow-x-auto">
+                          {`curl ${window.location.protocol}//${window.location.host}/api/emails/{emailId}?provider=openai \\
+  -H "X-API-Key: YOUR_API_KEY"
+
+curl ${window.location.protocol}//${window.location.host}/api/emails/{emailId}?from=openai.com \\
+  -H "X-API-Key: YOUR_API_KEY"`}
+                        </pre>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
                           <div className="text-sm font-medium">{t("docs.getMessage")}</div>
                           <Button
                             variant="ghost"
@@ -575,6 +601,7 @@ export function ApiKeyPanel() {
                           <li>{t("docs.note8")}</li>
                           <li>{t("docs.note9")}</li>
                           <li>{t("docs.note10")}</li>
+                          <li>{t("docs.note11")}</li>
                         </ul>
                       </div>
                     </div>
@@ -587,4 +614,4 @@ export function ApiKeyPanel() {
       }
     </div>
   )
-} 
+}

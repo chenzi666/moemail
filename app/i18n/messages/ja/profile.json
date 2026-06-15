@@ -34,6 +34,7 @@
       "generateEmail": "使い捨てメールを生成",
       "getEmails": "メールボックス一覧を取得",
       "getMessages": "メール一覧を取得",
+      "filterMessages": "送信者/サービスでメールを絞り込み",
       "getMessage": "メールを1件取得",
       "createEmailShare": "メールボックス共有リンクを作成",
       "getEmailShares": "メールボックス共有リンク一覧を取得",
@@ -51,7 +52,8 @@
       "note7": "cursor はページネーション用で、前回のレスポンスから nextCursor を取得してください",
       "note8": "すべてのリクエストには X-API-Key ヘッダーが必要です",
       "note9": "expiresIn は共有リンクの有効期間（ミリ秒）で、0 は永久を意味します",
-      "note10": "shareId は共有記録の一意な識別子です"
+      "note10": "shareId は共有記録の一意な識別子です",
+      "note11": "from は送信者アドレスまたはドメインで絞り込み、provider はサービス名（openai、qq など）で絞り込みます"
     }
   },
   "emailService": {

@@ -34,6 +34,7 @@
       "generateEmail": "產生臨時郵箱",
       "getEmails": "取得郵箱清單",
       "getMessages": "取得郵件清單",
+      "filterMessages": "依寄件者/服務商篩選郵件",
       "getMessage": "取得單封郵件",
       "createEmailShare": "建立郵箱分享連結",
       "getEmailShares": "取得郵箱分享連結清單",
@@ -51,7 +52,8 @@
       "note7": "cursor 用於分頁，從上一次請求的回應中取得 nextCursor",
       "note8": "所有請求都需要包含 X-API-Key 請求標頭",
       "note9": "expiresIn 是分享連結的有效期（毫秒），0 表示永久有效",
-      "note10": "shareId 是分享紀錄的唯一識別碼"
+      "note10": "shareId 是分享紀錄的唯一識別碼",
+      "note11": "from 可依寄件者地址或網域篩選，provider 可依服務商篩選（如 openai、qq）"
     }
   },
   "emailService": {
