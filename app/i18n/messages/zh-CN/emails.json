@@ -20,6 +20,7 @@
     "emailCountUnlimited": "{count}/∞ 个邮箱",
     "loading": "加载中...",
     "loadingMore": "加载更多...",
+    "loadFailed": "获取邮箱列表失败",
     "noEmails": "还没有邮箱，创建一个吧！",
     "expiresAt": "过期时间",
     "permanent": "永久有效",

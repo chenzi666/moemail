@@ -20,6 +20,7 @@
     "emailCountUnlimited": "{count}/∞ 個郵箱",
     "loading": "載入中...",
     "loadingMore": "載入更多...",
+    "loadFailed": "取得郵箱清單失敗",
     "noEmails": "還沒有郵箱，建立一個吧！",
     "expiresAt": "過期時間",
     "permanent": "永久有效",

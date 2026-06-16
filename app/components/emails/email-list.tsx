@@ -51,6 +51,10 @@ interface EmailResponse {
   total: number
 }
 
+type EmailListApiResponse = Partial<EmailResponse> & {
+  error?: string
+}
+
 const ALL_DOMAINS_VALUE = "__all__"
 
 export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
@@ -72,7 +76,7 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   const { toast } = useToast()
 
   const domainOptions = useMemo(
-    () => config?.emailDomainsArray.map(domain => domain.trim()).filter(Boolean) || [],
+    () => Array.from(new Set(config?.emailDomainsArray.map(domain => domain.trim()).filter(Boolean) || [])),
     [config?.emailDomainsArray]
   )
   const selectedCount = selectedEmailIds.size
@@ -88,25 +92,52 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
         url.searchParams.set('cursor', cursor)
       }
       const response = await fetch(url)
-      const data = await response.json() as EmailResponse
-      
-      if (!cursor) {
-        setEmails(data.emails)
-        setNextCursor(data.nextCursor)
-        setTotal(data.total)
+      const data = await response.json() as EmailListApiResponse
+
+      if (!response.ok || !Array.isArray(data.emails)) {
+        if (!cursor) {
+          setEmails([])
+          setNextCursor(null)
+          setTotal(0)
+        }
+
+        toast({
+          title: t("error"),
+          description: data.error || t("loadFailed"),
+          variant: "destructive"
+        })
         return
       }
-      setEmails(prev => [...prev, ...data.emails])
-      setNextCursor(data.nextCursor)
-      setTotal(data.total)
+
+      const fetchedEmails = data.emails
+      
+      if (!cursor) {
+        setEmails(fetchedEmails)
+        setNextCursor(data.nextCursor || null)
+        setTotal(data.total || 0)
+        return
+      }
+      setEmails(prev => [...prev, ...fetchedEmails])
+      setNextCursor(data.nextCursor || null)
+      setTotal(data.total || 0)
     } catch (error) {
       console.error("Failed to fetch emails:", error)
+      if (!cursor) {
+        setEmails([])
+        setNextCursor(null)
+        setTotal(0)
+      }
+      toast({
+        title: t("error"),
+        description: t("loadFailed"),
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
       setRefreshing(false)
       setLoadingMore(false)
     }
-  }, [selectedDomain])
+  }, [selectedDomain, t, toast])
 
   const handleRefresh = async () => {
     setRefreshing(true)

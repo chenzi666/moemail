@@ -20,6 +20,7 @@
     "emailCountUnlimited": "{count}/∞ emails",
     "loading": "Loading...",
     "loadingMore": "Loading more...",
+    "loadFailed": "Failed to load emails",
     "noEmails": "No emails yet, create one!",
     "expiresAt": "Expires",
     "permanent": "Permanent",

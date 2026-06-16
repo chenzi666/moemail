@@ -14,12 +14,11 @@ function normalizeDomainFilter(value: string | null) {
   return normalized || null
 }
 
-function escapeLikePattern(value: string) {
-  return value.replace(/[\\%_]/g, match => `\\${match}`)
-}
-
 function createDomainFilterCondition(domain: string): SQL {
-  return sql`LOWER(${emails.address}) LIKE ${`%@${escapeLikePattern(domain)}`} ESCAPE '\'`
+  return eq(
+    sql`LOWER(SUBSTR(${emails.address}, INSTR(${emails.address}, '@') + 1))`,
+    domain
+  )
 }
 
 export async function GET(request: Request) {
