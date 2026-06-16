@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { CreateDialog } from "./create-dialog"
@@ -8,6 +8,14 @@ import { ShareDialog } from "./share-dialog"
 import { Mail, RefreshCw, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useThrottle } from "@/hooks/use-throttle"
 import { EMAIL_CONFIG } from "@/config"
 import { useToast } from "@/components/ui/use-toast"
@@ -43,6 +51,8 @@ interface EmailResponse {
   total: number
 }
 
+const ALL_DOMAINS_VALUE = "__all__"
+
 export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   const { data: session } = useSession()
   const { config } = useConfig()
@@ -56,11 +66,24 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [total, setTotal] = useState(0)
   const [emailToDelete, setEmailToDelete] = useState<Email | null>(null)
+  const [selectedDomain, setSelectedDomain] = useState(ALL_DOMAINS_VALUE)
+  const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set())
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
   const { toast } = useToast()
 
-  const fetchEmails = async (cursor?: string) => {
+  const domainOptions = useMemo(
+    () => config?.emailDomainsArray.map(domain => domain.trim()).filter(Boolean) || [],
+    [config?.emailDomainsArray]
+  )
+  const selectedCount = selectedEmailIds.size
+  const allVisibleSelected = emails.length > 0 && emails.every(email => selectedEmailIds.has(email.id))
+
+  const fetchEmails = useCallback(async (cursor?: string) => {
     try {
       const url = new URL("/api/emails", window.location.origin)
+      if (selectedDomain !== ALL_DOMAINS_VALUE) {
+        url.searchParams.set('domain', selectedDomain)
+      }
       if (cursor) {
         url.searchParams.set('cursor', cursor)
       }
@@ -68,21 +91,8 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
       const data = await response.json() as EmailResponse
       
       if (!cursor) {
-        const newEmails = data.emails
-        const oldEmails = emails
-
-        const lastDuplicateIndex = newEmails.findIndex(
-          newEmail => oldEmails.some(oldEmail => oldEmail.id === newEmail.id)
-        )
-
-        if (lastDuplicateIndex === -1) {
-          setEmails(newEmails)
-          setNextCursor(data.nextCursor)
-          setTotal(data.total)
-          return
-        }
-        const uniqueNewEmails = newEmails.slice(0, lastDuplicateIndex)
-        setEmails([...uniqueNewEmails, ...oldEmails])
+        setEmails(data.emails)
+        setNextCursor(data.nextCursor)
         setTotal(data.total)
         return
       }
@@ -96,7 +106,7 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
       setRefreshing(false)
       setLoadingMore(false)
     }
-  }
+  }, [selectedDomain])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -117,8 +127,37 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   }, 200)
 
   useEffect(() => {
-    if (session) fetchEmails()
-  }, [session])
+    if (!session) return
+
+    setLoading(true)
+    setNextCursor(null)
+    setSelectedEmailIds(new Set())
+    fetchEmails()
+  }, [session, selectedDomain, fetchEmails])
+
+  const toggleEmailSelection = (emailId: string) => {
+    setSelectedEmailIds(prev => {
+      const next = new Set(prev)
+      if (next.has(emailId)) {
+        next.delete(emailId)
+      } else {
+        next.add(emailId)
+      }
+      return next
+    })
+  }
+
+  const toggleVisibleSelection = () => {
+    setSelectedEmailIds(prev => {
+      if (allVisibleSelected) {
+        return new Set()
+      }
+
+      const next = new Set(prev)
+      emails.forEach(email => next.add(email.id))
+      return next
+    })
+  }
 
   const handleDelete = async (email: Email) => {
     try {
@@ -138,6 +177,11 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
 
       setEmails(prev => prev.filter(e => e.id !== email.id))
       setTotal(prev => prev - 1)
+      setSelectedEmailIds(prev => {
+        const next = new Set(prev)
+        next.delete(email.id)
+        return next
+      })
 
       toast({
         title: t("success"),
@@ -155,6 +199,53 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
       })
     } finally {
       setEmailToDelete(null)
+    }
+  }
+
+  const handleBatchDelete = async () => {
+    const ids = Array.from(selectedEmailIds)
+    if (ids.length === 0) return
+
+    try {
+      const response = await fetch("/api/emails", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids })
+      })
+
+      const data = await response.json() as { error?: string; deleted?: number }
+
+      if (!response.ok) {
+        toast({
+          title: t("error"),
+          description: data.error || t("batchDeleteFailed"),
+          variant: "destructive"
+        })
+        return
+      }
+
+      const deletedCount = data.deleted || ids.length
+      const deletedIds = new Set(ids)
+
+      setEmails(prev => prev.filter(email => !deletedIds.has(email.id)))
+      setTotal(prev => Math.max(0, prev - deletedCount))
+      setSelectedEmailIds(new Set())
+      setBatchDeleteOpen(false)
+
+      if (selectedEmailId && deletedIds.has(selectedEmailId)) {
+        onEmailSelect(null)
+      }
+
+      toast({
+        title: t("success"),
+        description: t("batchDeleteSuccess", { count: deletedCount })
+      })
+    } catch {
+      toast({
+        title: t("error"),
+        description: t("batchDeleteFailed"),
+        variant: "destructive"
+      })
     }
   }
 
@@ -184,6 +275,55 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
           </div>
           <CreateDialog onEmailCreated={handleRefresh} />
         </div>
+
+        <div className="p-2 flex flex-col gap-2 border-b border-primary/20">
+          <Select value={selectedDomain} onValueChange={setSelectedDomain}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder={t("domainFilter")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_DOMAINS_VALUE}>{t("allDomains")}</SelectItem>
+              {domainOptions.map(domain => (
+                <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={allVisibleSelected}
+                onChange={toggleVisibleSelection}
+                disabled={emails.length === 0}
+                className="h-4 w-4"
+              />
+              <button
+                type="button"
+                className="hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={toggleVisibleSelection}
+                disabled={emails.length === 0}
+              >
+                {t("selectAll")}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {t("selectedCount", { count: selectedCount })}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-destructive hover:text-destructive"
+                disabled={selectedCount === 0}
+                onClick={() => setBatchDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                {t("batchDelete")}
+              </Button>
+            </div>
+          </div>
+        </div>
         
         <div className="flex-1 overflow-auto p-2" onScroll={handleScroll}>
           {loading ? (
@@ -199,6 +339,13 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
                   )}
                   onClick={() => onEmailSelect(email)}
                 >
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedEmailIds.has(email.id)}
+                      onChange={() => toggleEmailSelection(email.id)}
+                      className="h-4 w-4"
+                    />
+                  </div>
                   <Mail className="h-4 w-4 text-primary/60" />
                   <div className="truncate flex-1">
                     <div className="font-medium truncate">{email.address}</div>
@@ -259,6 +406,26 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("batchDeleteConfirm")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("batchDeleteDescription", { count: selectedCount })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={handleBatchDelete}
+            >
+              {tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
-} 
+}

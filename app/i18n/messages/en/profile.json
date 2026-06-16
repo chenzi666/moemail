@@ -33,6 +33,7 @@
       "getConfig": "Get System Config",
       "generateEmail": "Generate Temp Email",
       "getEmails": "Get Email List",
+      "batchDeleteEmails": "Batch Delete Emails",
       "getMessages": "Get Message List",
       "filterMessages": "Filter Messages by Sender or Provider",
       "getMessage": "Get Single Message",

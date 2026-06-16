@@ -477,8 +477,10 @@ Response:
 
 #### Get Email List
 ```http
-GET /api/emails?cursor=xxx
+GET /api/emails?cursor=xxx&domain=moemail.app
 ```
+Optional filters:
+- `domain`: filter mailboxes by email domain, for example `moemail.app`
 
 #### Get Messages for Email
 ```http
@@ -491,6 +493,16 @@ Optional filters:
 #### Delete Email
 ```http
 DELETE /api/emails/{emailId}
+```
+
+#### Batch Delete Emails
+```http
+DELETE /api/emails
+Content-Type: application/json
+
+{
+  "ids": ["email-uuid-123", "email-uuid-456"]
+}
 ```
 
 #### Get Single Message

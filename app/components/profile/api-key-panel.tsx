@@ -381,7 +381,7 @@ export function ApiKeyPanel() {
                             variant="ghost"
                             size="icon"
                             onClick={() => copyToClipboard(
-                              `curl ${window.location.protocol}//${window.location.host}/api/emails?cursor=CURSOR \\
+                              `curl ${window.location.protocol}//${window.location.host}/api/emails?cursor=CURSOR&domain=moemail.app \\
   -H "X-API-Key: YOUR_API_KEY"`
                             )}
                           >
@@ -389,8 +389,32 @@ export function ApiKeyPanel() {
                           </Button>
                         </div>
                         <pre className="text-xs bg-muted/50 rounded-lg p-4 overflow-x-auto">
-                          {`curl ${window.location.protocol}//${window.location.host}/api/emails?cursor=CURSOR \\
+                          {`curl ${window.location.protocol}//${window.location.host}/api/emails?cursor=CURSOR&domain=moemail.app \\
   -H "X-API-Key: YOUR_API_KEY"`}
+                        </pre>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">{t("docs.batchDeleteEmails")}</div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(
+                              `curl -X DELETE ${window.location.protocol}//${window.location.host}/api/emails \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"ids": ["emailId1", "emailId2"]}'`
+                            )}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <pre className="text-xs bg-muted/50 rounded-lg p-4 overflow-x-auto">
+                          {`curl -X DELETE ${window.location.protocol}//${window.location.host}/api/emails \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"ids": ["emailId1", "emailId2"]}'`}
                         </pre>
                       </div>
 

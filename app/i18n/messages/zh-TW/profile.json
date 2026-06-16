@@ -33,6 +33,7 @@
       "getConfig": "取得系統設定",
       "generateEmail": "產生臨時郵箱",
       "getEmails": "取得郵箱清單",
+      "batchDeleteEmails": "批量刪除郵箱",
       "getMessages": "取得郵件清單",
       "filterMessages": "依寄件者/服務商篩選郵件",
       "getMessage": "取得單封郵件",

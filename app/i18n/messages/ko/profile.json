@@ -33,6 +33,7 @@
       "getConfig": "시스템 설정 가져오기",
       "generateEmail": "임시 이메일 생성",
       "getEmails": "이메일 목록 가져오기",
+      "batchDeleteEmails": "이메일 일괄 삭제",
       "getMessages": "메시지 목록 가져오기",
       "filterMessages": "발신자/서비스로 메시지 필터링",
       "getMessage": "단일 메시지 가져오기",

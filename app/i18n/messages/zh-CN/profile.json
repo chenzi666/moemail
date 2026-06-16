@@ -33,6 +33,7 @@
       "getConfig": "获取系统配置",
       "generateEmail": "生成临时邮箱",
       "getEmails": "获取邮箱列表",
+      "batchDeleteEmails": "批量删除邮箱",
       "getMessages": "获取邮件列表",
       "filterMessages": "按发件人/服务商过滤邮件",
       "getMessage": "获取单封邮件",

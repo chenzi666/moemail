@@ -33,6 +33,7 @@
       "getConfig": "システム設定を取得",
       "generateEmail": "使い捨てメールを生成",
       "getEmails": "メールボックス一覧を取得",
+      "batchDeleteEmails": "メールボックスを一括削除",
       "getMessages": "メール一覧を取得",
       "filterMessages": "送信者/サービスでメールを絞り込み",
       "getMessage": "メールを1件取得",

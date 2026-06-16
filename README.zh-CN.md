@@ -484,10 +484,11 @@ Content-Type: application/json
 
 #### 获取邮箱列表
 ```http
-GET /api/emails?cursor=xxx
+GET /api/emails?cursor=xxx&domain=moemail.app
 ```
 参数说明：
 - `cursor`: 分页游标，可选
+- `domain`: 按邮箱域名筛选，可选，例如 `moemail.app`
 
 返回响应：
 ```json
@@ -508,7 +509,7 @@ GET /api/emails?cursor=xxx
 响应字段说明：
 - `emails`: 邮箱列表数组
 - `nextCursor`: 下一页游标，用于分页请求
-- `total`: 邮箱总数量
+- `total`: 符合筛选条件的邮箱总数量
 
 #### 获取指定邮箱邮件列表
 ```http
@@ -555,6 +556,26 @@ DELETE /api/emails/{emailId}
 ```
 响应字段说明：
 - `success`: 删除操作是否成功
+
+#### 批量删除邮箱
+```http
+DELETE /api/emails
+Content-Type: application/json
+
+{
+  "ids": ["email-uuid-123", "email-uuid-456"]
+}
+```
+参数说明：
+- `ids`: 要删除的邮箱 ID 数组，必填
+
+返回响应：
+```json
+{
+  "success": true,
+  "deleted": 2
+}
+```
 
 #### 获取单封邮件内容
 ```http

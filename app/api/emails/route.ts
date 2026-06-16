@@ -1,7 +1,7 @@
 import { createDb } from "@/lib/db"
-import { and, eq, gt, lt, or, sql } from "drizzle-orm"
+import { and, eq, gt, inArray, lt, or, sql, type SQL } from "drizzle-orm"
 import { NextResponse } from "next/server"
-import { emails } from "@/lib/schema"
+import { emails, messages } from "@/lib/schema"
 import { encodeCursor, decodeCursor } from "@/lib/cursor"
 import { getUserId } from "@/lib/apiKey"
 
@@ -9,18 +9,33 @@ export const runtime = "edge"
 
 const PAGE_SIZE = 20
 
+function normalizeDomainFilter(value: string | null) {
+  const normalized = value?.trim().toLowerCase()
+  return normalized || null
+}
+
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, match => `\\${match}`)
+}
+
+function createDomainFilterCondition(domain: string): SQL {
+  return sql`LOWER(${emails.address}) LIKE ${`%@${escapeLikePattern(domain)}`} ESCAPE '\'`
+}
+
 export async function GET(request: Request) {
   const userId = await getUserId()
 
   const { searchParams } = new URL(request.url)
   const cursor = searchParams.get('cursor')
+  const domainFilter = normalizeDomainFilter(searchParams.get('domain'))
   
   const db = createDb()
 
   try {
     const baseConditions = and(
       eq(emails.userId, userId!),
-      gt(emails.expiresAt, new Date())
+      gt(emails.expiresAt, new Date()),
+      ...(domainFilter ? [createDomainFilterCondition(domainFilter)] : [])
     )
 
     const totalResult = await db.select({ count: sql<number>`count(*)` })
@@ -73,4 +88,57 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   }
-} 
+}
+
+export async function DELETE(request: Request) {
+  const userId = await getUserId()
+
+  try {
+    const { ids } = await request.json<{ ids?: string[] }>()
+    const uniqueIds = Array.from(new Set(ids?.filter(Boolean) || []))
+
+    if (uniqueIds.length === 0) {
+      return NextResponse.json(
+        { error: "No email ids provided" },
+        { status: 400 }
+      )
+    }
+
+    const db = createDb()
+    const ownedEmails = await db.select({ id: emails.id })
+      .from(emails)
+      .where(and(
+        eq(emails.userId, userId!),
+        inArray(emails.id, uniqueIds)
+      ))
+
+    const ownedIds = ownedEmails.map(email => email.id)
+
+    if (ownedIds.length === 0) {
+      return NextResponse.json(
+        { error: "No matching emails found" },
+        { status: 404 }
+      )
+    }
+
+    await db.delete(messages)
+      .where(inArray(messages.emailId, ownedIds))
+
+    await db.delete(emails)
+      .where(and(
+        eq(emails.userId, userId!),
+        inArray(emails.id, ownedIds)
+      ))
+
+    return NextResponse.json({
+      success: true,
+      deleted: ownedIds.length
+    })
+  } catch (error) {
+    console.error('Failed to batch delete emails:', error)
+    return NextResponse.json(
+      { error: "Failed to delete emails" },
+      { status: 500 }
+    )
+  }
+}
