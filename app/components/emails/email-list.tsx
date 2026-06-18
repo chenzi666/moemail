@@ -5,10 +5,11 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { CreateDialog } from "./create-dialog"
 import { ShareDialog } from "./share-dialog"
-import { Mail, RefreshCw, Trash2 } from "lucide-react"
+import { Mail, RefreshCw, Search, Trash2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -71,6 +72,8 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   const [total, setTotal] = useState(0)
   const [emailToDelete, setEmailToDelete] = useState<Email | null>(null)
   const [selectedDomain, setSelectedDomain] = useState(ALL_DOMAINS_VALUE)
+  const [searchInput, setSearchInput] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set())
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
   const { toast } = useToast()
@@ -81,12 +84,16 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
   )
   const selectedCount = selectedEmailIds.size
   const allVisibleSelected = emails.length > 0 && emails.every(email => selectedEmailIds.has(email.id))
+  const hasActiveFilters = selectedDomain !== ALL_DOMAINS_VALUE || searchQuery.length > 0
 
   const fetchEmails = useCallback(async (cursor?: string) => {
     try {
       const url = new URL("/api/emails", window.location.origin)
       if (selectedDomain !== ALL_DOMAINS_VALUE) {
         url.searchParams.set('domain', selectedDomain)
+      }
+      if (searchQuery) {
+        url.searchParams.set('search', searchQuery)
       }
       if (cursor) {
         url.searchParams.set('cursor', cursor)
@@ -137,7 +144,15 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
       setRefreshing(false)
       setLoadingMore(false)
     }
-  }, [selectedDomain, t, toast])
+  }, [searchQuery, selectedDomain, t, toast])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearchQuery(searchInput.trim())
+    }, 300)
+
+    return () => window.clearTimeout(timeout)
+  }, [searchInput])
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -164,7 +179,7 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
     setNextCursor(null)
     setSelectedEmailIds(new Set())
     fetchEmails()
-  }, [session, selectedDomain, fetchEmails])
+  }, [session, selectedDomain, searchQuery, fetchEmails])
 
   const toggleEmailSelection = (emailId: string) => {
     setSelectedEmailIds(prev => {
@@ -308,6 +323,36 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
         </div>
 
         <div className="p-2 flex flex-col gap-2 border-b border-primary/20">
+          <div className="relative">
+            <label htmlFor="email-search" className="sr-only">
+              {t("searchLabel")}
+            </label>
+            <Search
+              className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              id="email-search"
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="h-8 pl-8 pr-8 text-xs"
+            />
+            {searchInput && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2"
+                onClick={() => setSearchInput("")}
+                aria-label={t("clearSearch")}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            )}
+          </div>
+
           <Select value={selectedDomain} onValueChange={setSelectedDomain}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder={t("domainFilter")} />
@@ -412,7 +457,7 @@ export function EmailList({ onEmailSelect, selectedEmailId }: EmailListProps) {
             </div>
           ) : (
             <div className="text-center text-sm text-gray-500">
-              {t("noEmails")}
+              {hasActiveFilters ? t("noSearchResults") : t("noEmails")}
             </div>
           )}
         </div>

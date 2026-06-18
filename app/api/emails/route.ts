@@ -14,11 +14,20 @@ function normalizeDomainFilter(value: string | null) {
   return normalized || null
 }
 
+function normalizeSearchFilter(value: string | null) {
+  const normalized = value?.trim().toLowerCase()
+  return normalized ? normalized.slice(0, 128) : null
+}
+
 function createDomainFilterCondition(domain: string): SQL {
   return eq(
     sql`LOWER(SUBSTR(${emails.address}, INSTR(${emails.address}, '@') + 1))`,
     domain
   )
+}
+
+function createSearchFilterCondition(search: string): SQL {
+  return gt(sql<number>`INSTR(LOWER(${emails.address}), ${search})`, 0)
 }
 
 export async function GET(request: Request) {
@@ -27,6 +36,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const cursor = searchParams.get('cursor')
   const domainFilter = normalizeDomainFilter(searchParams.get('domain'))
+  const searchFilter = normalizeSearchFilter(searchParams.get('search'))
   
   const db = createDb()
 
@@ -34,7 +44,8 @@ export async function GET(request: Request) {
     const baseConditions = and(
       eq(emails.userId, userId!),
       gt(emails.expiresAt, new Date()),
-      ...(domainFilter ? [createDomainFilterCondition(domainFilter)] : [])
+      ...(domainFilter ? [createDomainFilterCondition(domainFilter)] : []),
+      ...(searchFilter ? [createSearchFilterCondition(searchFilter)] : [])
     )
 
     const totalResult = await db.select({ count: sql<number>`count(*)` })

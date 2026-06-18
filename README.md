@@ -477,10 +477,11 @@ Response:
 
 #### Get Email List
 ```http
-GET /api/emails?cursor=xxx&domain=moemail.app
+GET /api/emails?cursor=xxx&domain=moemail.app&search=test
 ```
 Optional filters:
 - `domain`: filter mailboxes by email domain, for example `moemail.app`
+- `search`: search mailbox addresses by keyword, for example `test`
 
 #### Get Messages for Email
 ```http
